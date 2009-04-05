@@ -44,43 +44,42 @@ void free_vector(float *v, long nl, long nh)
         free((FREE_ARG) (v+nl-NR_END));
 }
 
-int **imatrix(nrl,nrh,ncl,nch)
-int nrl,nrh,ncl,nch;
-/* allocate an int matrix with subscript range m[nrl..nrh][ncl..nch] */
+int **imatrix(long nrl, long nrh, long ncl, long nch)
+/* allocate a int matrix with subscript range m[nrl..nrh][ncl..nch] */
 {
-      int  i,**m;
+	long i, nrow=nrh-nrl+1,ncol=nch-ncl+1;
+	int **m;
 
-       /*allocate pointers to rows */
-        m=(int **)malloc((unsigned) (nrh-nrl+1)*sizeof(int*));
-      m -= nrl;
+	m=(int **) malloc((size_t)((nrow+NR_END)*sizeof(int*)));
+	m += NR_END;
+	m -= nrl;
 
-       /*allocate rows and set pointers to them */
-        for(i=nrl;i<=nrh;i++) {
-                      m[i]=(int *)malloc((unsigned) (nch-ncl+1)*sizeof(int));
-      m[i] -= ncl;}
-       /* return pointer to array of pointers to rows */
-        return m;
+	m[nrl]=(int *) malloc((size_t)((nrow*ncol+NR_END)*sizeof(int)));
+	m[nrl] += NR_END;
+	m[nrl] -= ncl;
+
+	for(i=nrl+1;i<=nrh;i++) m[i]=m[i-1]+ncol;
+
+	return m;
 }
 
-float **matrix(nrl,nrh,ncl,nch)
-int nrl,nrh,ncl,nch;
+float **matrix(long nrl, long nrh, long ncl, long nch)
 /* allocate a float matrix with subscript range m[nrl..nrh][ncl..nch] */
 {
-    int i;
-    float **m;
+	long i, nrow=nrh-nrl+1,ncol=nch-ncl+1;
+	float **m;
 
-        /*allocate pointers to rows */
-        m=(float **) malloc((unsigned) (nrh-nrl+1)*sizeof(float*));
-    m -= nrl;
+	m=(float **) malloc((size_t)((nrow+NR_END)*sizeof(float*)));
+	m += NR_END;
+	m -= nrl;
 
-   /*allocate rows and set pointers to them */
-      for(i=nrl;i<=nrh;i++) {
-                      m[i]=(float *) malloc((unsigned) (nch-ncl+1)*sizeof(float)
-);
-            m[i] -= ncl;
-    }
-      /* return pointer to array of pointers to rows */
-      return m;
+	m[nrl]=(float *) malloc((size_t)((nrow*ncol+NR_END)*sizeof(float)));
+	m[nrl] += NR_END;
+	m[nrl] -= ncl;
+
+	for(i=nrl+1;i<=nrh;i++) m[i]=m[i-1]+ncol;
+
+	return m;
 }
 
 #define SWAP(a,b) itemp=(a);(a)=(b);(b)=itemp;
@@ -194,7 +193,7 @@ void fillinpitsandflats(i,j)
 int i,j;
 {   float min;
 
-	min=topo[i][j];
+    min=topo[i][j];
     if (topo[iup[i]][j]<min) min=topo[iup[i]][j];
     if (topo[idown[i]][j]<min) min=topo[idown[i]][j];
     if (topo[i][jup[j]]<min) min=topo[i][jup[j]];
@@ -274,15 +273,15 @@ int i,j;
 void hillslopediffusion()
 {
      int i,j,count;
-     float term1;
+     float term1,diff;
 
-     count=0;
+     for (i=1;i<=lattice_size_x;i++)
+      for (j=1;j<=lattice_size_y;j++)
+       topoold[i][j]=topo[i][j];
+     count=0; 
      while (count<5)
       {count++;
-       for (i=1;i<=lattice_size_x;i++)
-        for (j=1;j<=lattice_size_y;j++)
-         topoold[i][j]=topo[i][j];
-       for (i=1;i<=lattice_size_x;i++)
+	 for (i=1;i<=lattice_size_x;i++)
         {for (j=1;j<=lattice_size_y;j++)
           {term1=D*timestep/(delta*delta);
            if (flow[i][j]<thresholdarea)
@@ -306,9 +305,6 @@ void hillslopediffusion()
          tridag(ay,by,cy,ry,uy,lattice_size_y);
          for (j=1;j<=lattice_size_y;j++)
           topo[i][j]=uy[j];}
-       for (i=1;i<=lattice_size_x;i++)
-        for (j=1;j<=lattice_size_y;j++)
-         topoold[i][j]=topo[i][j];
        for (j=1;j<=lattice_size_y;j++)
         {for (i=1;i<=lattice_size_x;i++)
           {term1=D*timestep/(delta*delta);
@@ -345,7 +341,7 @@ main()
      lattice_size_x=640;
      lattice_size_y=335;
      delta=30.0;          /* m */
-     D=10.0;              /* m^2/kyr */
+     D=1.0;              /* m^2/kyr */
      thresholdarea=0.1;   /* km */
      duration=10000.0;    /* kyr */
      timestep=1000.0;     /* kyr */
