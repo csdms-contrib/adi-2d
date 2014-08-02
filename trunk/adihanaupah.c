@@ -330,6 +330,7 @@ void hillslopediffusion()
           topo[i][j]=ux[i];}}
 }
 
+int
 main()
 {    FILE *fp1,*fp2;
      float time,duration;
@@ -400,4 +401,5 @@ main()
        fprintf(fp2,"%f\n",topo[i][j]);
      fclose(fp1);
      fclose(fp2);
+  return EXIT_SUCCESS;
 }
